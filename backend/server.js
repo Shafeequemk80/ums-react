@@ -19,13 +19,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
 connectDB();
+app.get("/", (req, res) => {
+  res.send("Server Ready");
+});
+
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use(errorHandler);
 app.use(notFound);
 
-app.get("/", (req, res) => {
-  res.send("Server Ready");
-});
 
 app.listen(PORT, () => console.log(`Server Started on port ${PORT}`));
