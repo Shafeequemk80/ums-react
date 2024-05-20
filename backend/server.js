@@ -12,7 +12,9 @@ import connectDB from "./config/db.js";
 import cors from 'cors'
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-app.use(cors())
+app.use(cors({
+  origin: 'https://ums-react-fronend-shafeequemk80s-projects.vercel.app/'
+}));
 app.use("/static", express.static(path.join(__dirname, "./public")));
 
 app.use(express.json());
