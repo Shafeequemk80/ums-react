@@ -12,24 +12,23 @@ import connectDB from "./config/db.js";
 import cors from 'cors'
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const corsOptions = {
-  origin: 'http://localhost:5000', // Your frontend URL
-  credentials: true, // Allow credentials (cookies)
-};
-app.use(cors(corsOptions))
+app.use(cors({
+  origin: 'https://ums-react-fronend-shafeequemk80s-projects.vercel.app/'
+}));
 app.use("/static", express.static(path.join(__dirname, "./public")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
 connectDB();
+app.get("/", (req, res) => {
+  res.send("Server Ready");
+});
+
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use(errorHandler);
 app.use(notFound);
 
-app.get("/", (req, res) => {
-  res.send("Server Ready");
-});
 
 app.listen(PORT, () => console.log(`Server Started on port ${PORT}`));
