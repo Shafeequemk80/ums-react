@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Admin from "../models/adminModel.js";
 import User from "../models/userModels.js";
-
+import cloudinary  from '../utils/cloudinary.js'
 import generateToken from "../utils/genetateToken.js";
 
 
@@ -58,32 +58,46 @@ console.log(page,key);
 
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-  const image = req.file.filename;
+
+  // Check if the request includes an image file
+  if (!req.file) {
+    res.status(400);
+    throw new Error("Please upload an image");
+  }
+
+  const image = req.file.path; // Cloudinary image URL
+  const public_id = req.file.filename; // Might need to be req.file.public_id if using Cloudinary
+
   console.log(name, email, password, image);
+
+  // Check if the user already exists
   const userExist = await User.findOne({ email });
   if (userExist) {
     res.status(400);
-    throw new Error("user Already Exist");
+    throw new Error("User already exists");
   }
 
+  // Create new user
   const user = await User.create({
     name,
     email,
     password,
     image,
+    public_id
   });
 
+  // Return success response
   if (user) {
-    generateToken(res, user._id);
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
       image: user.image,
+     
     });
   } else {
     res.status(400);
-    throw new Error("invalid user Data");
+    throw new Error("Invalid user data");
   }
 });
 
@@ -116,19 +130,34 @@ const getAdminProfile = asyncHandler(async (req, res) => {
 // @ access private
 const updateAdminProfile = asyncHandler(async (req, res) => {
   const { _id, name, email } = req.body
-  const admin = await User.findById(_id);
-  if (admin) {
+  const user = await User.findById(_id);
+  if (user) {
     console.log({ _id, name, email });
-    admin.name = req.body.name || admin.name;
-    admin.email = req.body.email || admin.email;
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
     if (req.file) {
-      admin.image = req.file.filename || admin.image;
+      if (req.file) {
+        try {
+          // Delete the old image from Cloudinary
+          if (user.public_id) {
+            await cloudinary.uploader.destroy(user.public_id);
+          }
+          
+          // Update the new image and public ID
+          user.image = req.file.path || user.image;
+          user.public_id = req.file.filename || user.public_id;
+        } catch (error) {
+          console.error("Error updating image:", error);
+          res.status(500);
+          throw new Error("Error updating image");
+        }
+      }
     }
     if (req.body.password) {
-      admin.password = req.body.password;
+      user.password = req.body.password;
     }
 
-    const updateAdmin = await admin.save();
+    const updateAdmin = await user.save();
 
     res.status(200).json({
       _id: updateAdmin._id,

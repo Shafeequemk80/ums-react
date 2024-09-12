@@ -3,7 +3,7 @@ import express from "express";
 import path from 'path'
 import { fileURLToPath } from 'url';
 dotenv.config();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
@@ -12,7 +12,11 @@ import connectDB from "./config/db.js";
 import cors from 'cors'
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-app.use(cors())
+const corsOptions = {
+  origin: 'http://localhost:5000', // Your frontend URL
+  credentials: true, // Allow credentials (cookies)
+};
+app.use(cors(corsOptions))
 app.use("/static", express.static(path.join(__dirname, "./public")));
 
 app.use(express.json());

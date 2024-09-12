@@ -1,6 +1,11 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/userModels.js";
 import generateToken from "../utils/genetateToken.js";
+import dotenv from 'dotenv';
+import cloudinary from "../utils/cloudinary.js";
+dotenv.config();
+
+
 
 // @desc Auth user/set token
 // route POST /api/users/auth
@@ -29,8 +34,12 @@ const authUser = asyncHandler(async (req, res) => {
 
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-  const image = req.file.filename;
+
+  
+  const image = req.file.path;
+  const public_id = req.file.filename;
   console.log(name, email, password, image);
+
   const userExist = await User.findOne({ email });
   if (userExist) {
     res.status(400);
@@ -42,6 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     image,
+    public_id
   });
 
   if (user) {
@@ -91,9 +101,22 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-  if (req.file) {
-    user.image = req.file.filename|| user.image
-  }
+    if (req.file) {
+      try {
+        // Delete the old image from Cloudinary
+        if (user.public_id) {
+          await cloudinary.uploader.destroy(user.public_id);
+        }
+        
+        // Update the new image and public ID
+        user.image = req.file.path || user.image;
+        user.public_id = req.file.filename || user.public_id;
+      } catch (error) {
+        console.error("Error updating image:", error);
+        res.status(500);
+        throw new Error("Error updating image");
+      }
+    }
     if (req.body.password) {
       user.password = req.body.password;
     }

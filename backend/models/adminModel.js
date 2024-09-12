@@ -20,6 +20,11 @@ const adminSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+  public_id:{
+    type:String,
+    required:true,
+    default:true
+  }
   },
   {
     timestamps: true,
