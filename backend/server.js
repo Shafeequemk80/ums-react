@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
-import path from 'path'
-import { fileURLToPath } from 'url';
+
+
 dotenv.config();
 const PORT = process.env.PORT || 8000;
 import userRoutes from "./routes/userRoutes.js";
@@ -11,11 +11,12 @@ import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import connectDB from "./config/db.js";
 import cors from 'cors'
 const app = express();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 app.use(cors({
-  origin: 'https://ums-react-fronend-shafeequemk80s-projects.vercel.app/'
+  origin:process.env.BASE_URL
 }));
-app.use("/static", express.static(path.join(__dirname, "./public")));
+
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
