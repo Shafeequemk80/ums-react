@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import Admin from "../models/adminModel.js";
 import User from "../models/userModels.js";
 import cloudinary  from '../utils/cloudinary.js'
-import generateToken from "../utils/genetateToken.js";
+import generateToken from "../utils/generateToken.js";
 
 
 // @desc Auth Admin/set token

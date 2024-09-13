@@ -1,22 +1,22 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/userModels.js";
-import generateToken from "../utils/genetateToken.js";
-import dotenv from 'dotenv';
+import generateToken from "../utils/generateToken.js";
+import dotenv from "dotenv";
 import cloudinary from "../utils/cloudinary.js";
 dotenv.config();
 
-
-
-// @desc Auth user/set token
-// route POST /api/users/auth
-// @ access Pubilc
+// @desc Authenticate user and set token
+// @route POST /api/users/auth
+// @access Public
 const authUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  console.log("user loggined");
+  console.log("User logged in");
+
   const user = await User.findOne({ email });
+  
   if (user && (await user.matchPassword(password))) {
     generateToken(res, user._id);
-    res.status(201).json({
+    res.status(200).json({
       _id: user._id,
       name: user.name,
       email: user.email,
@@ -24,26 +24,25 @@ const authUser = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(400);
-    throw new Error("invalid Email and Password");
+    throw new Error("Invalid email or password");
   }
 });
 
-// @desc Auth user/a new user
-// route POST /api/users/register
-// @ access Pubilc
-
+// @desc Register a new user
+// @route POST /api/users/register
+// @access Public
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-
-  
   const image = req.file.path;
   const public_id = req.file.filename;
-  console.log(name, email, password, image);
+
+  console.log("Registering user:", name, email, image);
 
   const userExist = await User.findOne({ email });
+
   if (userExist) {
     res.status(400);
-    throw new Error("user Already Exist");
+    throw new Error("User already exists");
   }
 
   const user = await User.create({
@@ -51,12 +50,11 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     image,
-    public_id
+    public_id,
   });
 
   if (user) {
     generateToken(res, user._id);
-    
     res.status(201).json({
       _id: user._id,
       name: user.name,
@@ -65,42 +63,43 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(400);
-    throw new Error("invalid user Data");
+    throw new Error("Invalid user data");
   }
 });
 
-// @desc Auth user/logout user
-// route POST /api/users/logout
-// @ access Pubilc
+// @desc Logout user
+// @route POST /api/users/logout
+// @access Public
 const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("Jwt", "", {
     httpOnly: true,
     expires: new Date(0),
   });
-  res.status(200).json({ message: " User Logged Out" });
+  res.status(200).json({ message: "User logged out" });
 });
 
-// @desc get userProfile
-// route get /api/users/profile
-// @ access private
+// @desc Get user profile
+// @route GET /api/users/profile
+// @access Private
 const getUserProfile = asyncHandler(async (req, res) => {
   const user = {
     _id: req.user._id,
     name: req.user.name,
     email: req.user.email,
   };
-  res.status(200).json({ user });
+  res.status(200).json(user);
 });
 
-// @desc Update userProfile
-// route PUT /api/users/profile
-// @ access private
+// @desc Update user profile
+// @route PUT /api/users/profile
+// @access Private
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
-  if (user) {
 
+  if (user) {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
+
     if (req.file) {
       try {
         // Delete the old image from Cloudinary
@@ -108,32 +107,32 @@ const updateUserProfile = asyncHandler(async (req, res) => {
           await cloudinary.uploader.destroy(user.public_id);
         }
         
-        // Update the new image and public ID
-        user.image = req.file.path || user.image;
-        user.public_id = req.file.filename || user.public_id;
+        // Update new image and public ID
+        user.image = req.file.path;
+        user.public_id = req.file.filename;
       } catch (error) {
         console.error("Error updating image:", error);
         res.status(500);
         throw new Error("Error updating image");
       }
     }
+
     if (req.body.password) {
       user.password = req.body.password;
     }
 
-    const updateUser = await user.save();
+    const updatedUser = await user.save();
 
     res.status(200).json({
-      _id: updateUser._id,
-      name: updateUser.name,
-      email: updateUser.email,
-      image: updateUser.image,
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      image: updatedUser.image,
     });
   } else {
     res.status(404);
-    throw new Error("user Not Found");
+    throw new Error("User not found");
   }
-  res.status(200).json({ message: "update  User profile" });
 });
 
 export {
